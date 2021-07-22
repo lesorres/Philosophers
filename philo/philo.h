@@ -6,7 +6,7 @@
 /*   By: kmeeseek <kmeeseek@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/07/14 22:20:43 by kmeeseek          #+#    #+#             */
-/*   Updated: 2021/07/20 23:29:35 by kmeeseek         ###   ########.fr       */
+/*   Updated: 2021/07/21 21:25:26 by kmeeseek         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,6 +36,8 @@ typedef struct s_ph
 	pthread_mutex_t	*right_fork;
 	pthread_mutex_t	*message;
 	t_param			param;
+	long			start_time;
+	long			last_eat_time;
 }			t_ph;
 
 typedef struct s_all
@@ -44,6 +46,7 @@ typedef struct s_all
 	t_ph			*ph;
 	pthread_mutex_t	*forks;
 	pthread_mutex_t	message;
+
 }				t_all;
 
 int		ft_isdigit(int c);
