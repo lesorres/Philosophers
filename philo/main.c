@@ -6,7 +6,7 @@
 /*   By: kmeeseek <kmeeseek@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/07/14 22:14:38 by kmeeseek          #+#    #+#             */
-/*   Updated: 2021/07/24 00:56:24 by kmeeseek         ###   ########.fr       */
+/*   Updated: 2021/07/24 15:29:25 by kmeeseek         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -103,22 +103,9 @@ void	my_sleep(long time_period)
 	while (time_period > new_time - curr_time)
 	{
 		new_time = get_time();
-		usleep(1);
+		usleep(100);
 	}
 }
-
-// void    my_sleep(long tim)
-// {
-//     struct timeval  t1;
-//     ssize_t         timing;
-//     gettimeofday(&t1, NULL);
-//     timing = t1.tv_sec * 1000 + t1.tv_usec / 1000;
-//     while (tim > (t1.tv_sec * 1000 + t1.tv_usec / 1000) - timing)
-//     {
-//         gettimeofday(&t1, NULL);
-//         // usleep(1);
-//     }
-// }
 
 int	create_mutexes_and_ph(t_all *all)
 {
@@ -162,12 +149,12 @@ void eating(t_ph *ph)
 	pthread_mutex_lock(ph->right_fork);
 
 	curr_time = (get_time() - ph->start_time);
-	pthread_mutex_lock(ph->message);
 	if(*(ph->dead))
 	{
 		// printf ("dead = %i\n", *(ph->dead));
 		return ;
 	}
+	pthread_mutex_lock(ph->message);
 	printf("%li %d has taken a fork\n", curr_time, ph->id);
 	printf("%li %d has taken a fork\n", curr_time , ph->id);
 	printf("%li %d is eating\n", curr_time, ph->id);
@@ -178,40 +165,21 @@ void eating(t_ph *ph)
 	my_sleep(ph->param.time_to_eat);
 	pthread_mutex_unlock(ph->left_fork);
 	pthread_mutex_unlock(ph->right_fork);
-	ph->last_eat_time = curr_time + ph->param.time_to_eat;
+	// ph->last_eat_time = curr_time + ph->param.time_to_eat;
+	ph->last_eat_time = curr_time;
 }
-
-	// long	curr_time;
-
-	// // printf("here\n");
-	// pthread_mutex_lock(ph->left_fork);
-	// curr_time = get_time();
-	// pthread_mutex_lock(ph->message);
-	// printf("%li %d has taken a fork\n", curr_time - ph->start_time, ph->id);
-	// pthread_mutex_unlock(ph->message);
-	// // usleep (1000);
-	// pthread_mutex_lock(ph->right_fork);
-	// curr_time = get_time();
-	// pthread_mutex_lock(ph->message);
-	// printf("%li %d has taken a fork\n", curr_time - ph->start_time, ph->id);
-	// printf("%li %d is eating\n", curr_time - ph->start_time, ph->id);
-	// pthread_mutex_unlock(ph->message);
-	// usleep(ph->param.time_to_eat);
-	// pthread_mutex_unlock(ph->left_fork);
-	// pthread_mutex_unlock(ph->right_fork);
-	// ph->last_eat_time = curr_time - ph->start_time + ph->param.time_to_eat;
 
 void sleeping(t_ph *ph)
 {
 	long	curr_time;
 
 	curr_time = (get_time() - ph->start_time);
-	pthread_mutex_lock(ph->message);
 	if(*(ph->dead))
 	{
 		// printf ("dead = %i\n", *(ph->dead));
 		return ;
 	}
+	pthread_mutex_lock(ph->message);
 	// printf("%li %d is sleeping\n", ph->last_eat_time / 1000, ph->id);
 	printf("%li %d is sleeping\n", curr_time, ph->id);
 	pthread_mutex_unlock(ph->message);
@@ -224,36 +192,38 @@ void thinking(t_ph *ph)
 	long	curr_time;
 
 	curr_time = (get_time() - ph->start_time);
-	pthread_mutex_lock(ph->message);
 	if(*(ph->dead))
 	{
 		// printf ("dead = %i\n", *(ph->dead));
 		return ;
 	}
+	pthread_mutex_lock(ph->message);
 	printf("%li %d is thinking\n", curr_time , ph->id);
 	pthread_mutex_unlock(ph->message);
 }
 
 void	*action(void *arg)
 {
-	// printf("here2\n");
 	t_ph	*ph;
 	int		i;
-	// long	death_time;
+	long	death_time;
 
 	ph = (t_ph *)arg;
-	// if (ph->id % 2 == 0)
-	// 	usleep (1000);
-	// printf("ph.id = %i\n", ph->id);
+	if (ph->id % 2 == 0)
+		usleep (100);
 	i = 0;
 	while (ph->param.num_of_times_ph_must_eat == -1 || (ph->param.num_of_times_ph_must_eat > 0 && i < ph->param.num_of_times_ph_must_eat))
 	{
-		// death_time = get_time() - ph->start_time - ph[i].last_eat_time;
-		// if (death_time > ph->param.time_to_die)
-		// {
-		// 	pthread_mutex_lock(ph->message);
-		// 	*(ph->dead) = death_time;
-		// }
+		death_time = get_time() - ph->start_time - ph[i].last_eat_time;
+		// printf("curr time = %ld\n", (get_time() - ph->start_time));
+		// printf("last eat time = %ld\n", ph[i].last_eat_time);
+		if (death_time > ph->param.time_to_die)
+		{
+			pthread_mutex_lock(ph->message);
+			*(ph->dead) = death_time;
+			printf("%li %d died\n", death_time , i + 1);
+			return(0);
+		}
 		eating(ph);
 		sleeping(ph);
 		thinking(ph);
@@ -265,37 +235,49 @@ void	*action(void *arg)
 void	*if_dead(void *arg)
 {
 	t_all	*all;
-	int		i;
+	// int		i;
 	int		j;
-	long 	death_time;
+	// long 	death_time;
 
 	j = 0;
 	all = (t_all *)arg;
 	*(all->dead) = 0;
-	while (1) //(!all->dead)
-	{
-		i = 0;
-		while (i < all->param.num_of_ph)
+	// while (1) //(!all->dead)
+	// {
+		// i = 0;
+		// while (i < all->param.num_of_ph)
+		// {
+		// 	death_time = get_time() - all->ph->start_time - all->ph[i].last_eat_time;
+		// 	if (death_time > all->param.time_to_die)//((get_time() - all->ph->start_time - all->ph[i].last_eat_time) > all->param.time_to_die)
+		// 	{
+		// 		pthread_mutex_lock(&all->message);
+		// 		*(all->dead) = death_time;
+		// 		// write(2, "died here\n", 10);
+		// 		while (j < all->param.num_of_ph)
+		// 		{
+		// 			pthread_detach(all->ph[j].philo);
+		// 			j++;
+		// 		}
+		// 		// printf("%li %d died\n", (get_time() - all->ph->start_time) , i + 1);
+		// 		printf("%li %d died\n", (death_time) , i + 1);
+		// 		pthread_mutex_unlock(&all->message);
+		// 		return (0);
+		// 	}
+		// 	i++;
+		// }
+		while (1)
 		{
-			death_time = get_time() - all->ph->start_time - all->ph[i].last_eat_time;
-			if (death_time > all->param.time_to_die)//((get_time() - all->ph->start_time - all->ph[i].last_eat_time) > all->param.time_to_die)
+			if(*(all->dead) > 0)
 			{
-				pthread_mutex_lock(&all->message);
-				*(all->dead) = 1;
-				// write(2, "died here\n", 10);
 				while (j < all->param.num_of_ph)
 				{
 					pthread_detach(all->ph[j].philo);
 					j++;
 				}
-				// printf("%li %d died\n", (get_time() - all->ph->start_time) , i + 1);
-				printf("%li %d died\n", (death_time) , i + 1);
-				pthread_mutex_unlock(&all->message);
-				return (0);
+			return (0);
 			}
-			i++;
 		}
-	}
+	// }
 	return (0);
 }
 
@@ -307,9 +289,8 @@ int	create_treads(t_all *all)
 	while (i < all->param.num_of_ph)
 	{
 		pthread_create(&all->ph[i].philo, NULL, action, &all->ph[i]);
-		// printf("%ld\n %ld\n %ld\n %ld\n %ld\n", all->param.num_of_ph, all->param.time_to_die, all->param.time_to_eat, all->param.time_to_sleep, all->param.num_of_times_ph_must_eat);
-		// printf("ph.id = %i", all->ph[i].id);
 		i++;
+		// my_sleep(1);
 	}
 	i = 0;
 	// usleep (1000);
