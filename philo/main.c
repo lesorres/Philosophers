@@ -6,7 +6,7 @@
 /*   By: kmeeseek <kmeeseek@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/07/14 22:14:38 by kmeeseek          #+#    #+#             */
-/*   Updated: 2021/07/24 15:29:25 by kmeeseek         ###   ########.fr       */
+/*   Updated: 2021/07/25 01:12:04 by kmeeseek         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -103,9 +103,22 @@ void	my_sleep(long time_period)
 	while (time_period > new_time - curr_time)
 	{
 		new_time = get_time();
-		usleep(100);
+		usleep(200);
 	}
 }
+
+// void    my_sleep(long tim)
+// {
+//     struct timeval  t1;
+//     ssize_t         timing;
+//     gettimeofday(&t1, NULL);
+//     timing = t1.tv_sec * 1000 + t1.tv_usec / 1000;
+//     while (tim > (t1.tv_sec * 1000 + t1.tv_usec / 1000) - timing)
+//     {
+//         gettimeofday(&t1, NULL);
+//         // usleep(1);
+//     }
+// }
 
 int	create_mutexes_and_ph(t_all *all)
 {
@@ -119,6 +132,7 @@ int	create_mutexes_and_ph(t_all *all)
 	while (i < all->param.num_of_ph)
 		pthread_mutex_init(&all->forks[i++], NULL);
 	pthread_mutex_init(&all->message, NULL);
+	pthread_mutex_init(&all->start, NULL);
 	// printf ("here1\n");
 	if ((start_time = get_time()) == -1)
 		return (1);
@@ -132,12 +146,26 @@ int	create_mutexes_and_ph(t_all *all)
 		all->ph[i].right_fork = &all->forks[(i + 1) %  all->param.num_of_ph];
 		all->ph[i].message = &all->message;
 		all->ph[i].id = i + 1;
+		// printf("id = %i\n", all->ph[i].id);
 		all->ph[i].param = all->param;
 		all->ph[i].start_time = start_time;
 		all->ph[i].last_eat_time = 0;
+		all->ph[i].start = &all->start;
 		all->ph[i].dead = (all->dead);
+		 all->ph[i].dead2 = 0;
 		i++;
 	}
+	return (0);
+}
+
+int new_printf(t_ph *ph, long p1, int p2, char *str)
+{
+	if (*(ph->dead) > 0)
+	{
+		pthread_mutex_unlock(ph->message);
+		return (1);
+	}
+	printf("%li %d %s\n", p1, p2, str);
 	return (0);
 }
 
@@ -149,11 +177,6 @@ void eating(t_ph *ph)
 	pthread_mutex_lock(ph->right_fork);
 
 	curr_time = (get_time() - ph->start_time);
-	if(*(ph->dead))
-	{
-		// printf ("dead = %i\n", *(ph->dead));
-		return ;
-	}
 	pthread_mutex_lock(ph->message);
 	printf("%li %d has taken a fork\n", curr_time, ph->id);
 	printf("%li %d has taken a fork\n", curr_time , ph->id);
@@ -163,10 +186,10 @@ void eating(t_ph *ph)
 	// curr_time = get_time();
 	// usleep(ph->param.time_to_eat);
 	my_sleep(ph->param.time_to_eat);
+	ph->last_eat_time = (get_time() - ph->start_time);
+	// ph->last_eat_time = curr_time + ph->param.time_to_eat;
 	pthread_mutex_unlock(ph->left_fork);
 	pthread_mutex_unlock(ph->right_fork);
-	// ph->last_eat_time = curr_time + ph->param.time_to_eat;
-	ph->last_eat_time = curr_time;
 }
 
 void sleeping(t_ph *ph)
@@ -174,16 +197,9 @@ void sleeping(t_ph *ph)
 	long	curr_time;
 
 	curr_time = (get_time() - ph->start_time);
-	if(*(ph->dead))
-	{
-		// printf ("dead = %i\n", *(ph->dead));
-		return ;
-	}
 	pthread_mutex_lock(ph->message);
-	// printf("%li %d is sleeping\n", ph->last_eat_time / 1000, ph->id);
 	printf("%li %d is sleeping\n", curr_time, ph->id);
 	pthread_mutex_unlock(ph->message);
-	// usleep(ph->param.time_to_sleep);
 	my_sleep(ph->param.time_to_sleep);
 }
 
@@ -192,125 +208,154 @@ void thinking(t_ph *ph)
 	long	curr_time;
 
 	curr_time = (get_time() - ph->start_time);
-	if(*(ph->dead))
-	{
-		// printf ("dead = %i\n", *(ph->dead));
-		return ;
-	}
 	pthread_mutex_lock(ph->message);
 	printf("%li %d is thinking\n", curr_time , ph->id);
 	pthread_mutex_unlock(ph->message);
 }
 
-void	*action(void *arg)
+void *action(void *arg)
 {
-	t_ph	*ph;
-	int		i;
-	long	death_time;
+	t_ph *ph;
+	// long	death_time;
 
 	ph = (t_ph *)arg;
-	if (ph->id % 2 == 0)
-		usleep (100);
-	i = 0;
-	while (ph->param.num_of_times_ph_must_eat == -1 || (ph->param.num_of_times_ph_must_eat > 0 && i < ph->param.num_of_times_ph_must_eat))
+	
+	// if (ph->id == ph->param.num_of_ph)
+	// 	pthread_mutex_unlock(ph->start);
+	// else
+	// 	pthread_mutex_lock(ph->start);
+	
+	// while (ph->id == ph->param.num_of_ph)
+	// 	1 == 1;
+	if (ph->id % 2 != 0)
+		usleep (1000);
+	while (1)
 	{
-		death_time = get_time() - ph->start_time - ph[i].last_eat_time;
-		// printf("curr time = %ld\n", (get_time() - ph->start_time));
-		// printf("last eat time = %ld\n", ph[i].last_eat_time);
-		if (death_time > ph->param.time_to_die)
-		{
-			pthread_mutex_lock(ph->message);
-			*(ph->dead) = death_time;
-			printf("%li %d died\n", death_time , i + 1);
-			return(0);
-		}
+		// death_time = get_time() - ph->start_time - ph->last_eat_time + 1;
+		// printf("%li %d death_time\n", death_time , ph->id);
+		// if (death_time > ph->param.time_to_die)
+		// {
+		// 	pthread_mutex_lock(ph->message);
+		// 	*(ph->dead) = death_time;
+		// 	printf("%li %d died\n", death_time , ph->id);
+		// 	return(0);
+		// }
 		eating(ph);
 		sleeping(ph);
 		thinking(ph);
-		i++;
 	}
 	return (0);
 }
 
+// void	*if_dead(void *arg)
+// {
+// 	int i;
+// 	t_all *all;
+
+// 	all = (t_all *)arg;
+// 	*(all->dead) = 0;
+// 	i = 0;
+// 	while (1)
+// 	{
+// 		if (*(all->dead))
+// 		{
+// 			while (i < all->param.num_of_ph)
+// 			{
+// 				pthread_detach(all->ph[i].philo);
+// 				i++;
+// 			}
+// 			return (0);
+// 		}
+// 	}
+// 	return (0);
+// }
+
+void		ft_putchar_fd(char c, int fd)
+{
+	write(fd, &c, 1);
+}
+
+void			ft_putnbr_fd(int n, int fd)
+{
+	long int	k;
+
+	k = n;
+	if (k < 0)
+	{
+		k = k * (0 - 1);
+		ft_putchar_fd('-', fd);
+	}
+	if (k >= 10)
+	{
+		ft_putnbr_fd((k / 10), fd);
+		ft_putnbr_fd((k % 10), fd);
+	}
+	else
+		ft_putchar_fd((k + 48), fd);
+}
+
 void	*if_dead(void *arg)
 {
-	t_all	*all;
-	// int		i;
-	int		j;
-	// long 	death_time;
+	int i;
+	int j;
+	t_all *all;
 
-	j = 0;
 	all = (t_all *)arg;
 	*(all->dead) = 0;
-	// while (1) //(!all->dead)
-	// {
-		// i = 0;
-		// while (i < all->param.num_of_ph)
-		// {
-		// 	death_time = get_time() - all->ph->start_time - all->ph[i].last_eat_time;
-		// 	if (death_time > all->param.time_to_die)//((get_time() - all->ph->start_time - all->ph[i].last_eat_time) > all->param.time_to_die)
-		// 	{
-		// 		pthread_mutex_lock(&all->message);
-		// 		*(all->dead) = death_time;
-		// 		// write(2, "died here\n", 10);
-		// 		while (j < all->param.num_of_ph)
-		// 		{
-		// 			pthread_detach(all->ph[j].philo);
-		// 			j++;
-		// 		}
-		// 		// printf("%li %d died\n", (get_time() - all->ph->start_time) , i + 1);
-		// 		printf("%li %d died\n", (death_time) , i + 1);
-		// 		pthread_mutex_unlock(&all->message);
-		// 		return (0);
-		// 	}
-		// 	i++;
-		// }
-		while (1)
+	i = 0;
+	while (1)
+	{
+		j = 0;
+		while (j < all->param.num_of_ph)
 		{
-			if(*(all->dead) > 0)
+			all->ph[j].dead2 = get_time() - all->ph[j].start_time - all->ph[j].last_eat_time;
+			if (all->ph[j].dead2 > all->ph->param.time_to_die)
 			{
-				while (j < all->param.num_of_ph)
+				// pthread_mutex_lock(&all->message);
+				*(all->dead) = all->ph[j].dead2;
+				printf("%li %d died\n", all->ph[j].dead2 , all->ph->id);
+				// ft_putnbr_fd(all->ph[j].id, 1);
+				while (i < all->param.num_of_ph)
 				{
-					pthread_detach(all->ph[j].philo);
-					j++;
+					pthread_detach(all->ph[i].philo);
+					i++;
 				}
-			return (0);
+				return (0);
 			}
+			j++;
 		}
-	// }
+	}
 	return (0);
 }
 
 int	create_treads(t_all *all)
 {
-	int	i;
+	int i;
 
 	i = 0;
+	if (pthread_create(&all->death, NULL, if_dead, all))
+		return(0);
 	while (i < all->param.num_of_ph)
 	{
 		pthread_create(&all->ph[i].philo, NULL, action, &all->ph[i]);
 		i++;
-		// my_sleep(1);
 	}
 	i = 0;
-	// usleep (1000);
-	pthread_create(&all->death, NULL, if_dead, all);
-	pthread_join(all->death, NULL);
-	// if(all->dead == 1)
+	// if_dead(all);
 	// {
 	// 	while (i < all->param.num_of_ph)
 	// 	{
 	// 		pthread_detach(all->ph[i].philo);
 	// 		i++;
 	// 	}
-	// 	return (0);
+	// 	return (1);
 	// }
+	pthread_join(all->death, NULL);
 	while (i < all->param.num_of_ph)
 	{
 		pthread_join(all->ph[i].philo, NULL);
 		i++;
 	}
-
 	i = 0;
 	return (0);
 }
