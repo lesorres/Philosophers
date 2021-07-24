@@ -6,7 +6,7 @@
 /*   By: kmeeseek <kmeeseek@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/07/14 22:14:38 by kmeeseek          #+#    #+#             */
-/*   Updated: 2021/07/25 01:12:04 by kmeeseek         ###   ########.fr       */
+/*   Updated: 2021/07/25 01:41:00 by kmeeseek         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -215,7 +215,8 @@ void thinking(t_ph *ph)
 
 void *action(void *arg)
 {
-	t_ph *ph;
+	t_ph	*ph;
+	int		i;
 	// long	death_time;
 
 	ph = (t_ph *)arg;
@@ -229,7 +230,8 @@ void *action(void *arg)
 	// 	1 == 1;
 	if (ph->id % 2 != 0)
 		usleep (1000);
-	while (1)
+	i = 0;
+	while (ph->param.num_of_times_ph_must_eat == -1 || (ph->param.num_of_times_ph_must_eat > 0 && i < ph->param.num_of_times_ph_must_eat))
 	{
 		// death_time = get_time() - ph->start_time - ph->last_eat_time + 1;
 		// printf("%li %d death_time\n", death_time , ph->id);
@@ -243,6 +245,7 @@ void *action(void *arg)
 		eating(ph);
 		sleeping(ph);
 		thinking(ph);
+		i++;
 	}
 	return (0);
 }
@@ -312,7 +315,7 @@ void	*if_dead(void *arg)
 			if (all->ph[j].dead2 > all->ph->param.time_to_die)
 			{
 				// pthread_mutex_lock(&all->message);
-				*(all->dead) = all->ph[j].dead2;
+				// *(all->dead) = all->ph[j].dead2;
 				printf("%li %d died\n", all->ph[j].dead2 , all->ph->id);
 				// ft_putnbr_fd(all->ph[j].id, 1);
 				while (i < all->param.num_of_ph)
