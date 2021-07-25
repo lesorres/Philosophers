@@ -6,7 +6,7 @@
 /*   By: kmeeseek <kmeeseek@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/07/14 22:14:38 by kmeeseek          #+#    #+#             */
-/*   Updated: 2021/07/25 20:42:35 by kmeeseek         ###   ########.fr       */
+/*   Updated: 2021/07/25 21:41:33 by kmeeseek         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -127,6 +127,7 @@ int	create_mutexes_and_ph(t_all *all)
 	i = 0;
 	if ((start_time = get_time()) == -1)
 		return (1);
+	// all->full = 0;
 	while (i < all->param.num_of_ph)
 	{
 		all->ph[i].left_fork = &all->forks[i];
@@ -137,23 +138,23 @@ int	create_mutexes_and_ph(t_all *all)
 		all->ph[i].start_time = start_time;
 		all->ph[i].last_eat_time = 0;
 		// all->ph[i].start = &all->start;
-		all->ph[i].dead = (all->dead);
-		 all->ph[i].dead2 = 0;
+		// all->ph[i].dead = (all->dead);
+		// all->ph[i].dead2 = 0;
 		i++;
 	}
 	return (0);
 }
 
-int new_printf(t_ph *ph, long p1, int p2, char *str)
-{
-	if (*(ph->dead) > 0)
-	{
-		pthread_mutex_unlock(ph->message);
-		return (1);
-	}
-	printf("%li %d %s\n", p1, p2, str);
-	return (0);
-}
+// int new_printf(t_ph *ph, long p1, int p2, char *str)
+// {
+// 	if (*(ph->dead) > 0)
+// 	{
+// 		pthread_mutex_unlock(ph->message);
+// 		return (1);
+// 	}
+// 	printf("%li %d %s\n", p1, p2, str);
+// 	return (0);
+// }
 
 void eating(t_ph *ph)
 {
@@ -295,13 +296,15 @@ void	*if_dead(void *arg)
 	long curr_time;
 
 	all = (t_all *)arg;
-	*(all->dead) = 0;
+	// *(all->dead) = 0;
 	i = 0;
 	while (1)
 	{
 		j = 0;
 		while (j < all->param.num_of_ph)
 		{
+			// if (all->full == all->param.num_of_ph)
+			// 	break;
 			curr_time = get_time() - all->ph[j].start_time;
 			if (all->ph[j].last_eat_time + all->ph->param.time_to_die < curr_time)
 			{
@@ -317,6 +320,8 @@ void	*if_dead(void *arg)
 			}
 			j++;
 		}
+		// if (all->full == all->param.num_of_ph)
+		// 	break;
 	}
 	return (0);
 }
