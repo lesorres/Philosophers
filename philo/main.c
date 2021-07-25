@@ -6,7 +6,7 @@
 /*   By: kmeeseek <kmeeseek@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/07/14 22:14:38 by kmeeseek          #+#    #+#             */
-/*   Updated: 2021/07/25 20:24:28 by kmeeseek         ###   ########.fr       */
+/*   Updated: 2021/07/25 20:42:35 by kmeeseek         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -138,7 +138,7 @@ int	create_mutexes_and_ph(t_all *all)
 		all->ph[i].last_eat_time = 0;
 		// all->ph[i].start = &all->start;
 		all->ph[i].dead = (all->dead);
-		all->ph[i].dead2 = 0;
+		 all->ph[i].dead2 = 0;
 		i++;
 	}
 	return (0);
@@ -302,24 +302,6 @@ void	*if_dead(void *arg)
 		j = 0;
 		while (j < all->param.num_of_ph)
 		{
-			// // curr_time = get_time() - all->ph[j].start_time;
-			// all->ph[j].dead2 = get_time() - all->ph[j].start_time - all->ph[j].last_eat_time;
-			// if (all->ph[j].dead2 > all->ph->param.time_to_die)
-			// {
-			// 	printf("curr time = %ld\n", get_time() - all->ph[j].start_time);
-			// 	printf("last_eat_time = %ld\n", all->ph[j].last_eat_time);
-			// 	printf("died = %ld\n", all->ph[j].dead2);
-			// 	printf("time die= %ld\n", all->ph->param.time_to_die);
-			// 	// pthread_mutex_lock(&all->message);
-			// 	// *(all->dead) = all->ph[j].dead2;
-			// 	printf("%li %d died\n", get_time() - all->ph[j].start_time, all->ph->id);
-			// 	// ft_putnbr_fd(all->ph[j].id, 1);
-			// 	while (i < all->param.num_of_ph)
-			// 	{
-			// 		pthread_detach(all->ph[i].philo);
-			// 		i++;
-			// 	}
-			// 	return (0);
 			curr_time = get_time() - all->ph[j].start_time;
 			if (all->ph[j].last_eat_time + all->ph->param.time_to_die < curr_time)
 			{
@@ -363,11 +345,11 @@ int	create_treads(t_all *all)
 	// 	return (1);
 	// }
 	pthread_join(all->death, NULL);
-	while (i < all->param.num_of_ph)
-	{
-		pthread_join(all->ph[i].philo, NULL);
-		i++;
-	}
+	// while (i < all->param.num_of_ph)
+	// {
+	// 	pthread_join(all->ph[i].philo, NULL);
+	// 	i++;
+	// }
 	i = 0;
 	return (0);
 }
