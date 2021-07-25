@@ -6,7 +6,7 @@
 /*   By: kmeeseek <kmeeseek@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/07/14 22:14:38 by kmeeseek          #+#    #+#             */
-/*   Updated: 2021/07/25 22:33:49 by kmeeseek         ###   ########.fr       */
+/*   Updated: 2021/07/25 22:47:11 by kmeeseek         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -151,6 +151,11 @@ void eating(t_ph *ph)
 {
 	long	curr_time;
 
+	if (ph->param.num_of_ph == 1)
+	{
+		curr_time = (get_time() - ph->start_time);
+		printf("%li %d has taken a fork\n", curr_time, ph->id);
+	}
 	pthread_mutex_lock(ph->left_fork);
 	pthread_mutex_lock(ph->right_fork);
 
@@ -344,6 +349,7 @@ void destroy_everything(t_all *all)
 	}
 	pthread_mutex_destroy(&all->message);
 	i = 0;
+
 }
 
 int	main(int argc, char **argv)
@@ -356,6 +362,6 @@ int	main(int argc, char **argv)
 		return (1);
 	if (create_treads(&all))
 		return (1);
-	// destroy_everything(&all);
+	destroy_everything(&all);
 	return (0);
 }
