@@ -6,7 +6,7 @@
 #    By: kmeeseek <kmeeseek@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2021/07/16 20:21:08 by kmeeseek          #+#    #+#              #
-#    Updated: 2021/07/17 21:45:05 by kmeeseek         ###   ########.fr        #
+#    Updated: 2021/07/25 21:50:13 by kmeeseek         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -19,7 +19,7 @@ RM = rm -f
 OBJS = $(INPUT:.c=.o)
 
 all: $(NAME)
-$(NAME): $(OBJS)
+$(NAME): $(OBJS) $(HEAD)
 	gcc -g $(OBJS) $(CFLAGS) $(FLAGS) -o $(NAME)
 %.o: %.c %.h
 	gcc -g $(CFLAGS) -c $< -o $(<:.c=.o) -fsanitize=address

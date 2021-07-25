@@ -6,7 +6,7 @@
 /*   By: kmeeseek <kmeeseek@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/07/14 22:14:38 by kmeeseek          #+#    #+#             */
-/*   Updated: 2021/07/25 21:41:33 by kmeeseek         ###   ########.fr       */
+/*   Updated: 2021/07/25 22:33:49 by kmeeseek         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -71,17 +71,6 @@ int	process_arguments(int argc, char **argv, t_all	*all)
 	return (0);
 }
 
-// long	get_time(void)
-// {
-// 	struct timeval	time;
-// 	long			ret;
-
-// 	if (gettimeofday(&time, NULL))
-// 		return (error ("gettimeofday error"));
-// 	ret = time.tv_sec * 1000 + time.tv_usec / 1000;
-// 	return (ret);
-// }
-
 long	get_time(void)
 {
 	struct timeval	time;
@@ -137,6 +126,8 @@ int	create_mutexes_and_ph(t_all *all)
 		all->ph[i].param = all->param;
 		all->ph[i].start_time = start_time;
 		all->ph[i].last_eat_time = 0;
+		all->ph[i].meal_num = 0;
+		all->ph[i].set = 0;
 		// all->ph[i].start = &all->start;
 		// all->ph[i].dead = (all->dead);
 		// all->ph[i].dead2 = 0;
@@ -181,6 +172,7 @@ void eating(t_ph *ph)
 	// ph->last_eat_time = curr_time + ph->param.time_to_eat;
 	pthread_mutex_unlock(ph->left_fork);
 	pthread_mutex_unlock(ph->right_fork);
+	ph->meal_num++;
 }
 
 void sleeping(t_ph *ph)
@@ -241,29 +233,6 @@ void *action(void *arg)
 	return (0);
 }
 
-// void	*if_dead(void *arg)
-// {
-// 	int i;
-// 	t_all *all;
-
-// 	all = (t_all *)arg;
-// 	*(all->dead) = 0;
-// 	i = 0;
-// 	while (1)
-// 	{
-// 		if (*(all->dead))
-// 		{
-// 			while (i < all->param.num_of_ph)
-// 			{
-// 				pthread_detach(all->ph[i].philo);
-// 				i++;
-// 			}
-// 			return (0);
-// 		}
-// 	}
-// 	return (0);
-// }
-
 void		ft_putchar_fd(char c, int fd)
 {
 	write(fd, &c, 1);
@@ -296,6 +265,7 @@ void	*if_dead(void *arg)
 	long curr_time;
 
 	all = (t_all *)arg;
+	all->full = 0;
 	// *(all->dead) = 0;
 	i = 0;
 	while (1)
@@ -303,8 +273,11 @@ void	*if_dead(void *arg)
 		j = 0;
 		while (j < all->param.num_of_ph)
 		{
-			// if (all->full == all->param.num_of_ph)
-			// 	break;
+			if (all->ph[j].meal_num == all->param.num_of_times_ph_must_eat && !all->ph[j].set)
+			{
+				all->ph[j].set = 1;
+				all->full++;
+			}
 			curr_time = get_time() - all->ph[j].start_time;
 			if (all->ph[j].last_eat_time + all->ph->param.time_to_die < curr_time)
 			{
@@ -320,8 +293,8 @@ void	*if_dead(void *arg)
 			}
 			j++;
 		}
-		// if (all->full == all->param.num_of_ph)
-		// 	break;
+		if (all->full == all->param.num_of_ph)
+			break;
 	}
 	return (0);
 }
