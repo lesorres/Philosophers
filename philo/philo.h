@@ -6,7 +6,7 @@
 /*   By: kmeeseek <kmeeseek@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/07/14 22:20:43 by kmeeseek          #+#    #+#             */
-/*   Updated: 2021/07/24 21:58:19 by kmeeseek         ###   ########.fr       */
+/*   Updated: 2021/07/25 20:24:06 by kmeeseek         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,6 +41,7 @@ typedef struct s_ph
 	long			last_eat_time;
 	long			*dead;
 	long			dead2;
+	// int				*full;
 }			t_ph;
 
 typedef struct s_all
@@ -49,9 +50,10 @@ typedef struct s_all
 	t_ph			*ph;
 	pthread_mutex_t	*forks;
 	pthread_mutex_t	message;
-	pthread_mutex_t	start;
+	// pthread_mutex_t	start;
 	pthread_t		death;
 	long			*dead;
+	// int				*full;
 
 }				t_all;
 

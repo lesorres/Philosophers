@@ -6,7 +6,7 @@
 /*   By: kmeeseek <kmeeseek@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/07/14 22:14:38 by kmeeseek          #+#    #+#             */
-/*   Updated: 2021/07/25 01:41:00 by kmeeseek         ###   ########.fr       */
+/*   Updated: 2021/07/25 20:24:28 by kmeeseek         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -107,19 +107,6 @@ void	my_sleep(long time_period)
 	}
 }
 
-// void    my_sleep(long tim)
-// {
-//     struct timeval  t1;
-//     ssize_t         timing;
-//     gettimeofday(&t1, NULL);
-//     timing = t1.tv_sec * 1000 + t1.tv_usec / 1000;
-//     while (tim > (t1.tv_sec * 1000 + t1.tv_usec / 1000) - timing)
-//     {
-//         gettimeofday(&t1, NULL);
-//         // usleep(1);
-//     }
-// }
-
 int	create_mutexes_and_ph(t_all *all)
 {
 	int		i;
@@ -132,27 +119,26 @@ int	create_mutexes_and_ph(t_all *all)
 	while (i < all->param.num_of_ph)
 		pthread_mutex_init(&all->forks[i++], NULL);
 	pthread_mutex_init(&all->message, NULL);
-	pthread_mutex_init(&all->start, NULL);
+	// pthread_mutex_init(&all->start, NULL);
 	// printf ("here1\n");
-	if ((start_time = get_time()) == -1)
-		return (1);
 	all->ph = malloc(sizeof(t_ph) * all->param.num_of_ph);
 	if (!all->ph)
 		return (error("mutexes memory allocation error"));
 	i = 0;
+	if ((start_time = get_time()) == -1)
+		return (1);
 	while (i < all->param.num_of_ph)
 	{
 		all->ph[i].left_fork = &all->forks[i];
 		all->ph[i].right_fork = &all->forks[(i + 1) %  all->param.num_of_ph];
 		all->ph[i].message = &all->message;
 		all->ph[i].id = i + 1;
-		// printf("id = %i\n", all->ph[i].id);
 		all->ph[i].param = all->param;
 		all->ph[i].start_time = start_time;
 		all->ph[i].last_eat_time = 0;
-		all->ph[i].start = &all->start;
+		// all->ph[i].start = &all->start;
 		all->ph[i].dead = (all->dead);
-		 all->ph[i].dead2 = 0;
+		all->ph[i].dead2 = 0;
 		i++;
 	}
 	return (0);
@@ -181,12 +167,16 @@ void eating(t_ph *ph)
 	printf("%li %d has taken a fork\n", curr_time, ph->id);
 	printf("%li %d has taken a fork\n", curr_time , ph->id);
 	printf("%li %d is eating\n", curr_time, ph->id);
+	ph->last_eat_time =  get_time() - ph->start_time;
+	// ph->last_eat_time = curr_time;
+	// if (ph->id == 1)
+	// 	printf("last_eat_time1 = %ld\n", ph->last_eat_time);
 	pthread_mutex_unlock(ph->message);
 	// usleep (1000);
 	// curr_time = get_time();
 	// usleep(ph->param.time_to_eat);
 	my_sleep(ph->param.time_to_eat);
-	ph->last_eat_time = (get_time() - ph->start_time);
+	// ph->last_eat_time = (get_time() - ph->start_time) + ph->param.time_to_eat;
 	// ph->last_eat_time = curr_time + ph->param.time_to_eat;
 	pthread_mutex_unlock(ph->left_fork);
 	pthread_mutex_unlock(ph->right_fork);
@@ -302,6 +292,7 @@ void	*if_dead(void *arg)
 	int i;
 	int j;
 	t_all *all;
+	long curr_time;
 
 	all = (t_all *)arg;
 	*(all->dead) = 0;
@@ -311,18 +302,35 @@ void	*if_dead(void *arg)
 		j = 0;
 		while (j < all->param.num_of_ph)
 		{
-			all->ph[j].dead2 = get_time() - all->ph[j].start_time - all->ph[j].last_eat_time;
-			if (all->ph[j].dead2 > all->ph->param.time_to_die)
+			// // curr_time = get_time() - all->ph[j].start_time;
+			// all->ph[j].dead2 = get_time() - all->ph[j].start_time - all->ph[j].last_eat_time;
+			// if (all->ph[j].dead2 > all->ph->param.time_to_die)
+			// {
+			// 	printf("curr time = %ld\n", get_time() - all->ph[j].start_time);
+			// 	printf("last_eat_time = %ld\n", all->ph[j].last_eat_time);
+			// 	printf("died = %ld\n", all->ph[j].dead2);
+			// 	printf("time die= %ld\n", all->ph->param.time_to_die);
+			// 	// pthread_mutex_lock(&all->message);
+			// 	// *(all->dead) = all->ph[j].dead2;
+			// 	printf("%li %d died\n", get_time() - all->ph[j].start_time, all->ph->id);
+			// 	// ft_putnbr_fd(all->ph[j].id, 1);
+			// 	while (i < all->param.num_of_ph)
+			// 	{
+			// 		pthread_detach(all->ph[i].philo);
+			// 		i++;
+			// 	}
+			// 	return (0);
+			curr_time = get_time() - all->ph[j].start_time;
+			if (all->ph[j].last_eat_time + all->ph->param.time_to_die < curr_time)
 			{
 				// pthread_mutex_lock(&all->message);
-				// *(all->dead) = all->ph[j].dead2;
-				printf("%li %d died\n", all->ph[j].dead2 , all->ph->id);
-				// ft_putnbr_fd(all->ph[j].id, 1);
+				printf("%ld %d died\n", curr_time, all->ph[j].id);
 				while (i < all->param.num_of_ph)
 				{
 					pthread_detach(all->ph[i].philo);
 					i++;
 				}
+				// pthread_mutex_unlock(&all->message);
 				return (0);
 			}
 			j++;
@@ -342,6 +350,7 @@ int	create_treads(t_all *all)
 	{
 		pthread_create(&all->ph[i].philo, NULL, action, &all->ph[i]);
 		i++;
+		usleep (100);
 	}
 	i = 0;
 	// if_dead(all);
@@ -363,6 +372,20 @@ int	create_treads(t_all *all)
 	return (0);
 }
 
+void destroy_everything(t_all *all)
+{
+	int i;
+
+	i = 0;
+	while (i < all->param.num_of_ph)
+	{
+		pthread_mutex_destroy(&all->forks[i]);
+		i++;
+	}
+	pthread_mutex_destroy(&all->message);
+	i = 0;
+}
+
 int	main(int argc, char **argv)
 {
 	t_all	all;
@@ -373,5 +396,6 @@ int	main(int argc, char **argv)
 		return (1);
 	if (create_treads(&all))
 		return (1);
+	// destroy_everything(&all);
 	return (0);
 }
