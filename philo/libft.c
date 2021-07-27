@@ -6,11 +6,11 @@
 /*   By: kmeeseek <kmeeseek@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/07/16 19:37:48 by kmeeseek          #+#    #+#             */
-/*   Updated: 2021/07/19 19:33:56 by kmeeseek         ###   ########.fr       */
+/*   Updated: 2021/07/26 21:17:54 by kmeeseek         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-# include "philo.h"
+#include "philo.h"
 
 int	ft_isdigit(int c)
 {
@@ -22,8 +22,8 @@ int	ft_isdigit(int c)
 long	ft_atoi_long(char *str)
 {
 	long	rslt;
-	int	ngt;
-	int	i;
+	int		ngt;
+	int		i;
 
 	ngt = 1;
 	rslt = 0;
